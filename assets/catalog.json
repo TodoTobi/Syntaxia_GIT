@@ -1,0 +1,76 @@
+{
+  "models": [
+    {
+      "id": "laptop-basic",
+      "title": "Laptop básica",
+      "formats": {
+        "obj": "assets/models/laptop/v1/model.obj"
+      },
+      "thumbnail": "",
+      "tags": ["laptop", "hardware"],
+      "license": "CC0",
+      "source": "interno",
+      "scale": 1.0
+    },
+    {
+      "id": "monitor-24",
+      "title": "Monitor 24”",
+      "formats": { "obj": "assets/models/monitor/v1/model.obj" },
+      "thumbnail": "",
+      "tags": ["monitor","display"],
+      "license": "CC0",
+      "source": "interno",
+      "scale": 1.0
+    },
+    {
+      "id": "router-4ports",
+      "title": "Router 4 Puertos",
+      "formats": { "obj": "assets/models/router/v1/model.obj" },
+      "thumbnail": "",
+      "tags": ["router","redes"],
+      "license": "CC-BY 4.0",
+      "source": "externo",
+      "scale": 1.0
+    },
+    {
+      "id": "keyboard-full",
+      "title": "Teclado completo",
+      "formats": { "obj": "assets/models/keyboard/v1/model.obj" },
+      "thumbnail": "",
+      "tags": ["keyboard","periferico"],
+      "license": "CC0",
+      "source": "interno",
+      "scale": 1.0
+    },
+    {
+      "id": "mouse-basic",
+      "title": "Mouse básico",
+      "formats": { "obj": "assets/models/mouse/v1/model.obj" },
+      "thumbnail": "",
+      "tags": ["mouse","periferico"],
+      "license": "CC0",
+      "source": "interno",
+      "scale": 1.0
+    },
+    {
+      "id": "smartphone-basic",
+      "title": "Smartphone",
+      "formats": { "obj": "assets/models/smartphone/v1/model.obj" },
+      "thumbnail": "",
+      "tags": ["phone","mobile"],
+      "license": "CC0",
+      "source": "interno",
+      "scale": 1.0
+    },
+    {
+      "id": "person-lowpoly",
+      "title": "Persona (lowpoly)",
+      "formats": { "obj": "assets/models/person/v1/model.obj" },
+      "thumbnail": "",
+      "tags": ["persona","placeholder"],
+      "license": "CC0",
+      "source": "interno",
+      "scale": 1.0
+    }
+  ]
+}

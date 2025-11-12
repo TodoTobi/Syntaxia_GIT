@@ -1,0 +1,6 @@
+.env
+__pycache__/
+*.pyc
+data/uploads/*
+data/modelos3d/*
+data/pedidos_modelado/*.json

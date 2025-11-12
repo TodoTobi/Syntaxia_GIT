@@ -1,0 +1,17 @@
+classes:
+  laptop:
+    prefer: ["laptop-basic"]
+  monitor:
+    prefer: ["monitor-24"]
+  tv:
+    prefer: ["monitor-24"]
+  keyboard:
+    prefer: ["keyboard-full"]
+  mouse:
+    prefer: ["mouse-basic"]
+  router:
+    prefer: ["router-4ports"]
+  "cell phone":
+    prefer: ["smartphone-basic"]
+  person:
+    prefer: ["person-lowpoly"]

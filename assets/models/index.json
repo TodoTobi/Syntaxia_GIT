@@ -1,0 +1,12 @@
+{
+  "laptop": [
+    {"file": "library/laptop/laptop.obj", "name": "Laptop Basic", "license": "CC0", "source": "poly.pizza"},
+    {"file": "library/laptop/ultrabook_01.obj", "name": "Ultrabook 01", "license": "CC-BY", "author": "@autor", "source": "sketchfab"}
+  ],
+  "router": [
+    {"file": "library/router/router_small.obj", "name": "Router Small", "license": "CC0", "source": "poly.pizza"}
+  ],
+  "monitor": [
+    {"file": "library/monitor/monitor_27.obj", "name": "Monitor 27\"", "license": "CC0", "source": "poly.pizza"}
+  ]
+}

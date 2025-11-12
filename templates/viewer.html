@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Visor 3D • SINTAXIA</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root{ --bg:#0b0d12; --panel:#0f1422; --text:#eaf1ff; --muted:#9fb1d6; --accent:#6a8bff; }
+    *{box-sizing:border-box} html,body{height:100%}
+    body{ margin:0; background:var(--bg); color:var(--text); font-family:"Inter",system-ui,Segoe UI,Roboto,Arial,sans-serif; }
+    header{ display:flex; align-items:center; gap:12px; padding:12px 16px; background:linear-gradient(90deg,rgba(106,139,255,.12),transparent); border-bottom:1px solid rgba(255,255,255,.12); }
+    .title{ font-weight:800 } a{ color:#aecdff; text-decoration:none } a:hover{ text-decoration:underline }
+    .container{ height: calc(100vh - 64px); display:grid; grid-template-rows: auto 1fr; gap:12px; padding:12px 16px; }
+    .panel{ background:var(--panel); border:1px solid rgba(255,255,255,.10); border-radius:14px; padding:10px 12px; }
+    #viewer{ position:relative; height:100%; border:1px solid rgba(255,255,255,.1); border-radius:14px; overflow:hidden; }
+
+    .row{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    #cmd{ flex:1; min-width:260px; padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.15); background:#0b1120; color:var(--text); }
+    #btnRun{ padding:10px 14px; border-radius:10px; border:1px solid rgba(255,255,255,.2); background:#15213a; color:#dfe8ff; cursor:pointer }
+    #btnRun:hover{ filter:brightness(1.1) }
+    .hint{ color:var(--muted); font-size:.9rem }
+
+    /* Overlay estilo videojuego */
+    .overlay{
+      position:absolute; inset:0; display:none; place-items:center;
+      background:rgba(0,0,0,.55);
+    }
+    .overlay.show{ display:grid; }
+    .hud{
+      width:min(520px, 92%); border:1px solid rgba(255,255,255,.2); border-radius:12px; padding:16px;
+      background:linear-gradient(180deg, rgba(16,24,40,.9), rgba(9,14,24,.9));
+      box-shadow:0 12px 28px rgba(0,0,0,.45);
+    }
+    .hud h4{ margin:0 0 10px; font-weight:800; letter-spacing:.4px }
+    .bar{ height:10px; border-radius:8px; background:#0f1b34; border:1px solid rgba(255,255,255,.12); overflow:hidden; }
+    .bar > div{
+      height:100%; width:0%; background:linear-gradient(90deg,#6a8bff,#22d3ee);
+      animation: progress 1.2s ease-in-out infinite alternate;
+    }
+    @keyframes progress{ from{ width:15% } to{ width:85% } }
+    .scanline{
+      margin-top:10px; height:40px; border:1px solid rgba(255,255,255,.12); border-radius:8px; overflow:hidden;
+      background:repeating-linear-gradient( to bottom, rgba(255,255,255,.04), rgba(255,255,255,.04) 2px, transparent 2px, transparent 4px);
+      position:relative;
+    }
+    .scanline::after{
+      content:""; position:absolute; left:-30%; top:0; width:30%; height:100%;
+      background:linear-gradient(90deg, transparent, rgba(255,255,255,.25), transparent);
+      animation: sweep 1.4s linear infinite;
+    }
+    @keyframes sweep{ from{ left:-30% } to{ left:100% } }
+
+    .toast{ position:absolute; left:12px; top:12px; background:rgba(0,0,0,.55); border:1px solid rgba(255,255,255,.15); color:#e8f0ff; font-size:13px; padding:8px 10px; border-radius:10px; pointer-events:none }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="title">🔧 Visor 3D</div>
+    <div style="margin-left:auto">
+      <a href="/" title="Volver al chat">← Volver al chat</a>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="panel row">
+      <input id="cmd" type="text" placeholder="Ej: 'rota 30° en Y', 'escala 120%', 'color rojo', 'wireframe on', 'reset', 'cargar /modelos/archivo.obj'">
+      <button id="btnRun">Aplicar</button>
+      <div class="hint" style="margin-left:auto">El comando afecta solo al modelo 3D.</div>
+    </div>
+
+    <div id="viewer">
+      <div class="overlay" id="overlay">
+        <div class="hud">
+          <h4>Procesando modelo…</h4>
+          <div class="bar"><div></div></div>
+          <div class="scanline"></div>
+          <div class="hint">Optimizando malla • Ajustando materiales • Recentrando escena</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ES Modules -->
+  <script type="module">
+    import * as THREE from 'https://esm.sh/three@0.152.2';
+    import { OrbitControls } from 'https://esm.sh/three@0.152.2/examples/jsm/controls/OrbitControls.js';
+    import { OBJLoader }    from 'https://esm.sh/three@0.152.2/examples/jsm/loaders/OBJLoader.js';
+    import { MTLLoader }    from 'https://esm.sh/three@0.152.2/examples/jsm/loaders/MTLLoader.js';
+
+    // ---------- Setup base ----------
+    const container = document.getElementById('viewer');
+    const cmdInput  = document.getElementById('cmd');
+    const btnRun    = document.getElementById('btnRun');
+    const overlay   = document.getElementById('overlay');
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0b0c10);
+    scene.fog = new THREE.Fog(0x0b0c10, 650, 2000); // leve profundidad
+
+    const camera = new THREE.PerspectiveCamera(60, 16/9, 0.1, 5000);
+    camera.position.set(120,120,180);
+
+    const renderer = new THREE.WebGLRenderer({ antialias:true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;                 // sombras
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;  // suaves
+    renderer.outputColorSpace = THREE.SRGBColorSpace;  // colores correctos
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.2;                // +exposición para no “oscuro”
+    container.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+
+    // ---------- Estudio de luces (iluminación “real”) ----------
+    // Dome general
+    const hemi = new THREE.HemisphereLight(0xddeeff, 0x0b0c10, 0.9);
+    scene.add(hemi);
+
+    // Relleno base
+    const ambient = new THREE.AmbientLight(0xffffff, 0.45);
+    scene.add(ambient);
+
+    // Key light (principal)
+    const dir1 = new THREE.DirectionalLight(0xffffff, 1.2);
+    dir1.position.set(220, 280, 200);
+    dir1.castShadow = true;
+    dir1.shadow.mapSize.set(1024, 1024);
+    scene.add(dir1);
+
+    // Fill/back light (contraluz)
+    const dir2 = new THREE.DirectionalLight(0xffffff, 0.6);
+    dir2.position.set(-180, 150, -160);
+    scene.add(dir2);
+
+    // Spotlight cenital (vitrina)
+    const spot = new THREE.SpotLight(0xffffff, 1.4, 1200, Math.PI / 6, 0.35);
+    spot.position.set(0, 420, 260);
+    spot.castShadow = true;
+    scene.add(spot);
+    scene.add(spot.target);
+
+    // Piso que recibe sombras
+    const floorGeo = new THREE.PlaneGeometry(2000, 2000);
+    const floorMat = new THREE.MeshStandardMaterial({ color: 0x0e1118, roughness: 0.9, metalness: 0.0 });
+    const floor = new THREE.Mesh(floorGeo, floorMat);
+    floor.rotation.x = -Math.PI/2;
+    floor.position.y = -40;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    // Grid sutil para referencia
+    const grid = new THREE.GridHelper(1200, 60, 0x5a6cff, 0x2b3245);
+    grid.material.opacity = .25; grid.material.transparent = true;
+    grid.position.y = -39.9;
+    scene.add(grid);
+
+    const axes = new THREE.AxesHelper(80); axes.visible = false;
+    scene.add(axes);
+
+    // Placeholder / estado
+    const phMat = new THREE.MeshStandardMaterial({ color: 0xaaaaaa, metalness: .1, roughness: .6 });
+    let placeholder = null;
+    let currentObj = null;
+
+    function toast(msg){
+      const t = document.createElement('div');
+      t.className = 'toast'; t.textContent = msg;
+      container.appendChild(t); setTimeout(()=> t.remove(), 2200);
+    }
+
+    function resize(){
+      const rect = container.getBoundingClientRect();
+      const W = Math.max(rect.width, 300);
+      const H = Math.max(rect.height, 300);
+      camera.aspect = W/H; camera.updateProjectionMatrix();
+      renderer.setSize(W, H);
+    }
+    window.addEventListener('resize', resize); resize();
+
+    function setLoading(v){ overlay.classList.toggle('show', !!v); }
+
+    function clearPlaceholder(){
+      if (placeholder){ scene.remove(placeholder); placeholder.geometry?.dispose(); placeholder.material?.dispose(); placeholder=null; }
+    }
+    function clearModel(){
+      if (currentObj){ scene.remove(currentObj); currentObj.traverse(n=>{ if (n.geometry) n.geometry.dispose(); }); currentObj=null; }
+    }
+
+    function centerAndScale(obj){
+      const box = new THREE.Box3().setFromObject(obj);
+      const center = new THREE.Vector3(); box.getCenter(center); obj.position.sub(center);
+      const size = new THREE.Vector3(); box.getSize(size);
+      const maxDim = Math.max(size.x, size.y, size.z) || 1;
+      obj.scale.setScalar(160 / maxDim);
+      camera.position.set(0, 80, Math.max(260, maxDim*2.2));
+      controls.target.set(0,0,0); controls.update();
+    }
+
+    // --- Detectar MTL dentro del OBJ ---
+    async function detectMtllib(objUrl){
+      try{
+        const txt = await (await fetch(objUrl)).text();
+        const m = txt.match(/^mtllib\s+(.+)$/mi);
+        return m ? m[1].trim() : null;
+      }catch{ return null; }
+    }
+    function buildSiblingUrl(baseUrl, filename){
+      const u = new URL(baseUrl, window.location.origin);
+      const parts = u.pathname.split("/"); parts.pop(); parts.push(filename);
+      return parts.join("/");
+    }
+
+    async function loadObj(url){
+      if (!url) return;
+      setLoading(true);
+      clearPlaceholder();
+      placeholder = new THREE.Mesh(new THREE.BoxGeometry(60,20,40), phMat);
+      placeholder.castShadow = true; placeholder.receiveShadow = true;
+      scene.add(placeholder);
+
+      const objLoader = new OBJLoader();
+      const safeURL = encodeURI(url);
+
+      // ¿hay MTL?
+      const mtllibName = await detectMtllib(safeURL);
+      if (mtllibName){
+        const mtlUrl = buildSiblingUrl(safeURL, mtllibName);
+        try{
+          const head = await fetch(mtlUrl, { method: 'HEAD' });
+          if (head.ok){
+            const mats = await new Promise((resolve, reject)=>{
+              new MTLLoader().load(mtlUrl, m=>{ m.preload(); resolve(m); }, undefined, reject);
+            });
+            objLoader.setMaterials(mats);
+          }
+        }catch(e){ console.warn("No se pudo cargar MTL:", e); }
+      }
+
+      return new Promise((resolve)=>{
+        objLoader.load(
+          safeURL,
+          (obj)=>{
+            clearPlaceholder(); clearModel();
+            obj.traverse(ch=>{
+              if (ch.isMesh){
+                ch.castShadow = true; ch.receiveShadow = true;
+                if (!ch.material || !('color' in ch.material)){
+                  ch.material = new THREE.MeshStandardMaterial({ color:0xffffff, metalness:.1, roughness:.6 });
+                }
+              }
+            });
+            centerAndScale(obj);
+            obj.userData.isModel = true;
+            scene.add(obj);
+            currentObj = obj;
+            setLoading(false);
+            toast('Modelo cargado ✅');
+            resolve(true);
+          },
+          undefined,
+          (err)=>{ console.error(err); setLoading(false); toast('No se pudo cargar el OBJ'); resolve(false); }
+        );
+      });
+    }
+
+    // Carga inicial si viene ?src=...
+    const params = new URLSearchParams(location.search);
+    const initial = params.get('src');
+    if (initial){ loadObj(initial); }
+
+    // ---------- Parser de comandos (MVP) ----------
+    function parseColor(word){
+      const named = {
+        rojo:'#ff6161', verde:'#22c55e', azul:'#60a5fa', blanco:'#ffffff', negro:'#111111',
+        gris:'#9ca3af', amarillo:'#fde047', naranja:'#fb923c', violeta:'#a78bfa', cian:'#22d3ee', magenta:'#f472b6'
+      };
+      if (named[word]) return new THREE.Color(named[word]);
+      if (/^#?[0-9a-f]{6}$/i.test(word)) return new THREE.Color(word.startsWith('#')?word:'#'+word);
+      return null;
+    }
+    const deg = n => (n * Math.PI) / 180;
+
+    async function runCommand(raw){
+      const txt = (raw||'').toLowerCase().trim();
+      if (!txt) return;
+
+      setLoading(true);
+      await new Promise(r=> setTimeout(r, 650));
+
+      // cargar nuevo .obj
+      const loadMatch = txt.match(/cargar\s+([^\s]+\.obj)/);
+      if (loadMatch){ await loadObj(loadMatch[1]); setLoading(false); return; }
+
+      if (!currentObj){ setLoading(false); toast('No hay modelo cargado'); return; }
+
+      if (/^reset\b/.test(txt)){ centerAndScale(currentObj); setLoading(false); toast('Reset aplicado'); return; }
+
+      const wfOn  = /(wireframe\s*(on|activar|encender))/.test(txt);
+      const wfOff = /(wireframe\s*(off|desactivar|apagar))/.test(txt);
+      if (wfOn || wfOff){
+        currentObj.traverse(ch=>{ if (ch.isMesh && ch.material) ch.material.wireframe = wfOn; });
+        setLoading(false); toast(`Wireframe ${wfOn?'activado':'desactivado'}`); return;
+      }
+
+      const colorWord = txt.match(/color\s+([#a-z0-9]+)/i)?.[1];
+      if (colorWord){
+        const c = parseColor(colorWord);
+        if (c){
+          currentObj.traverse(ch=>{ if (ch.isMesh && ch.material && 'color' in ch.material) ch.material.color.copy(c); });
+          setLoading(false); toast('Color aplicado'); return;
+        }
+      }
+
+      const opMatch = txt.match(/opacidad\s*(\d{1,3})%?/);
+      if (opMatch){
+        let val = Math.max(0, Math.min(100, parseInt(opMatch[1],10))) / 100;
+        currentObj.traverse(ch=>{
+          if (ch.isMesh && ch.material){
+            ch.material.transparent = val < 1;
+            ch.material.opacity = val;
+            ch.material.needsUpdate = true;
+          }
+        });
+        setLoading(false); toast(`Opacidad ${Math.round(val*100)}%`); return;
+      }
+
+      const scMatch = txt.match(/escala\s*(\d{2,4})%/);
+      if (scMatch){
+        const factor = parseInt(scMatch[1],10)/100;
+        currentObj.scale.multiplyScalar(factor);
+        setLoading(false); toast(`Escala x${factor.toFixed(2)}`); return;
+      }
+
+      const rotMatch = txt.match(/rota(r)?\s*(\d{1,3})\s*°?\s*(en\s*[xyz])?/);
+      if (rotMatch){
+        const ang = deg(parseInt(rotMatch[2],10));
+        const axis = (rotMatch[3]||'en y').slice(-1);
+        if (axis==='x') currentObj.rotation.x += ang;
+        if (axis==='y') currentObj.rotation.y += ang;
+        if (axis==='z') currentObj.rotation.z += ang;
+        setLoading(false); toast(`Rotado ${rotMatch[2]}° en ${axis.toUpperCase()}`); return;
+      }
+
+      const movMatch = txt.match(/mover\s*(x|y|z)\s*(-?\d+(\.\d+)?)/);
+      if (movMatch){
+        const ax = movMatch[1], v = parseFloat(movMatch[2]);
+        currentObj.position[ax] += v;
+        setLoading(false); toast(`Movido ${ax.toUpperCase()} ${v}`); return;
+      }
+
+      if (/zoom\s*(in|acercar)/.test(txt)){ camera.position.multiplyScalar(0.8); setLoading(false); toast('Zoom in'); return; }
+      if (/zoom\s*(out|alejar)/.test(txt)){ camera.position.multiplyScalar(1.25); setLoading(false); toast('Zoom out'); return; }
+
+      if (/grid\s*(on|mostrar|activar)/.test(txt)){ grid.visible=true; setLoading(false); toast('Grid activado'); return; }
+      if (/grid\s*(off|ocultar|desactivar)/.test(txt)){ grid.visible=false; setLoading(false); toast('Grid desactivado'); return; }
+      if (/ejes?\s*(on|mostrar|activar)/.test(txt)){ axes.visible=true; setLoading(false); toast('Ejes activados'); return; }
+      if (/ejes?\s*(off|ocultar|desactivar)/.test(txt)){ axes.visible=false; setLoading(false); toast('Ejes desactivados'); return; }
+
+      setLoading(false);
+      toast('No entendí la instrucción (prueba: "rota 30° en Y", "escala 120%", "color rojo", "wireframe on", "reset", "cargar /modelos/xxx.obj")');
+    }
+
+    btnRun.addEventListener('click', ()=> runCommand(cmdInput.value));
+    cmdInput.addEventListener('keydown', (e)=>{ if (e.key==='Enter') runCommand(cmdInput.value); });
+
+    (function animate(){
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    })();
+  </script>
+</body>
+</html>

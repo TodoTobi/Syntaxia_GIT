@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SINTAXIA</title>
+
+  <!-- Fuente -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Bootstrap -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"/>
+
+  <!-- Markdown + Sanitizer -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.7/dist/purify.min.js"></script>
+
+  <!-- MathJax (LaTeX) -->
+  <script>
+    window.MathJax = { tex: {inlineMath: [['$', '$'], ['\\(', '\\)']]}, svg: {fontCache: 'global'} };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+  <style>
+    :root{
+      --bg:#0b0d12; --panel:#121723; --panel-2:#141a28;
+      --text:#eef3f8; --muted:#b2bdcc;
+      --accent:#6a8bff; --accent-2:#22d3ee;
+      --bot-grad-1:#182033; --bot-grad-2:#11182a;
+      --user:#2c3a6b; --user-border:#8db0ff;
+      --ok:#22c55e; --radius:18px; --radius-pill:22px;
+      --shadow:0 10px 28px rgba(0,0,0,.42);
+      --border: rgba(255,255,255,.10);
+      --border-strong: rgba(255,255,255,.18);
+      --chip:#172032; --hr: rgba(255,255,255,.2); --scroll:#2c3550;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; color:var(--text); font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial,sans-serif;
+      background:radial-gradient(1200px 600px at 80% -10%, rgba(34,211,238,.12),transparent),
+                 radial-gradient(900px 500px at 10% 110%, rgba(106,139,255,.14),transparent),
+                 var(--bg);
+    }
+
+    .app{max-width:1000px; margin:24px auto; padding:12px}
+    .card-chat{background:linear-gradient(180deg,var(--panel),var(--panel-2)); border:1px solid var(--border);
+      border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden;}
+
+    .chat-header{display:flex; align-items:center; gap:.75rem; padding:14px 16px; border-bottom:1px solid var(--border);
+      background:linear-gradient(90deg,rgba(106,139,255,.12),transparent);}
+    .brand{display:flex; align-items:center; gap:.65rem}
+    .logo{width:40px;height:40px;border-radius:14px;display:grid;place-items:center;color:#fff;font-weight:900;
+      background:linear-gradient(135deg,var(--accent),var(--accent-2)); box-shadow:0 4px 14px rgba(106,139,255,.45);}
+    .title{font-weight:800; letter-spacing:.3px}
+    .subtle{color:#e7eefc}
+    .status{display:flex; align-items:center; gap:.4rem; color:#e7eefc}
+    .status-dot{width:10px;height:10px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 4px rgba(34,197,94,.15);}
+
+    .chat-container{height:60vh; overflow-y:auto; padding:18px 18px 26px; scroll-behavior:smooth;}
+    .chat-container::-webkit-scrollbar{ width:10px }
+    .chat-container::-webkit-scrollbar-thumb{ background:var(--scroll); border-radius:10px; border:2px solid transparent; background-clip:content-box; }
+
+    .row-msg{display:flex; gap:12px; margin:18px 0; align-items:flex-start; animation:slideIn .2s ease-out both;}
+    @keyframes slideIn{from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)}}
+    .row-msg.user{justify-content:flex-end}
+
+    .avatar{flex:0 0 36px;height:36px;width:36px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:.9rem;color:#fff;
+      background:linear-gradient(135deg,var(--accent),var(--accent-2)); box-shadow:0 2px 8px rgba(106,139,255,.35);}
+    .row-msg.user .avatar{background:linear-gradient(135deg,#4f5fa8,#7ea1ff);}
+
+    .bubble{
+      max-width:58vw; padding:.85rem 1rem; border-radius:var(--radius-pill);
+      line-height:1.7; white-space:pre-wrap; word-wrap:anywhere; box-shadow:0 3px 10px rgba(0,0,0,.18);
+    }
+    .row-msg.bot .bubble{background:linear-gradient(180deg,var(--bot-grad-1),var(--bot-grad-2)); border:1px solid var(--border); color:var(--text)}
+    .row-msg.user .bubble{background:var(--user); border:1px solid var(--user-border); color:#f9fbff}
+    @media (max-width:768px){ .bubble{max-width:90vw} }
+
+    .meta{margin-top:.25rem; text-align:right; font-size:.72rem; color:#a6b4ca; opacity:.9;}
+
+    .bubble h1,.bubble h2,.bubble h3{margin:.1rem 0 .45rem; line-height:1.25; font-weight:800}
+    .bubble h1{font-size:1.18rem; color:#9cb4ff}
+    .bubble h2{font-size:1.08rem; color:#b8c8ff}
+    .bubble h3{font-size:1.02rem; color:#ced8ff}
+    .bubble p{margin:.45rem 0}
+    .bubble strong{font-weight:800}
+    .bubble ul,.bubble ol{margin:.4rem 0 .4rem 1.25rem}
+    .bubble li{margin:.2rem 0; list-style: disc}
+    .bubble code{background:#0e1320; padding:.12rem .35rem; border-radius:8px}
+    .bubble pre{background:#0e1320; padding:.65rem .85rem; border-radius:12px; overflow:auto}
+    .bubble hr{border:none;border-top:1px solid var(--hr);margin:.6rem 0}
+
+    .typing{display:flex;gap:6px;align-items:center;height:18px}
+    .dot{width:7px;height:7px;border-radius:50%;background:#d1d7e6;opacity:.5;animation:blink 1.4s infinite}
+    .dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
+    @keyframes blink{0%,80%,100%{opacity:.15} 40%{opacity:.95}}
+
+    /* Composer */
+    .composer{padding:14px; border-top:1px solid var(--border); background:linear-gradient(180deg,rgba(0,0,0,.14),rgba(0,0,0,.18));}
+    .composer-inner{
+      display:flex; align-items:center; gap:10px;
+      border:1px solid var(--border); background:#0d1321; border-radius:28px;
+      padding:6px 8px 6px 12px; box-shadow:inset 0 0 0 1px rgba(255,255,255,.02);
+    }
+    .btn-attach{
+      width:38px;height:38px;border-radius:50%;display/grid;place-items:center;flex:0 0 auto;
+      background:#141b2c;border:1px solid var(--border); color:#e3ebfc; transition:.15s ease;
+    }
+    .btn-attach:hover{border-color:var(--border-strong); transform:translateY(-1px)}
+    .input-wrap{position:relative; flex:1; display:flex; align-items:center}
+
+    textarea#userInput{
+      width:100%; height:46px; overflow-y:auto; resize:none; background:transparent; color:var(--text); border:none; outline:none;
+      padding:.7rem .5rem; caret-color:#cfe1ff;
+    }
+    textarea#userInput.maxed{ height:120px; }
+
+    .actions{display:flex; align-items:center; gap:8px}
+    .btn-send{
+      width:92px; height:38px; border-radius:18px; border:none; font-weight:700; color:#fff;
+      background:linear-gradient(135deg,var(--accent),var(--accent-2)); box-shadow:0 6px 18px rgba(106,139,255,.35);
+    }
+    .btn-send:disabled{filter:grayscale(.4); opacity:.85}
+
+    .chip-preview{
+      display:none; align-items:center; gap:.55rem; margin-left:8px;
+      background:rgba(122,153,255,.10); border:1px dashed var(--user-border);
+      border-radius:14px; padding:.25rem .55rem; width:fit-content;
+    }
+    .chip-preview img{width:28px;height:28px;object-fit:cover;border-radius:6px}
+    .chip-preview button{border:none;background:transparent;color:#cbd5e1}
+
+    .composer.has-attachment .composer-inner{ padding:10px 10px 10px 12px; }
+    .composer.has-attachment textarea#userInput{ height:72px; }
+
+    /* Uploader flotante */
+    .uploader{
+      position:absolute; left:8px; bottom:54px; min-width:320px;
+      background:#0e1424; border:1px solid var(--border); border-radius:14px; padding:12px;
+      box-shadow:0 16px 32px rgba(0,0,0,.55); display:none; z-index:100;
+    }
+    .uploader.show{display:block}
+    .uploader .title{font-weight:700; margin-bottom:.5rem; color:#eaf1ff}
+    .dropzone{
+      border:2px dashed rgba(150,170,255,.4); border-radius:12px; padding:16px;
+      display:grid; place-items:center; color:#bcd0ff; background:rgba(120,140,190,.08);
+    }
+    .dropzone.drag{ background:rgba(120,140,190,.16); }
+    .uploader .hint{color:var(--muted); font-size:.85rem; margin-top:.5rem}
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <div class="card-chat">
+      <div class="chat-header">
+        <div class="brand">
+          <div class="logo">S</div>
+          <div>
+            <div class="title">SINTAXIA</div>
+            <div class="subtle" style="font-size:.92rem;">Tutor TICs • Modelo: <strong>Llama 3.1 (Groq)</strong></div>
+          </div>
+        </div>
+        <div class="ms-auto status">
+          <span>en línea</span><span class="status-dot"></span>
+        </div>
+      </div>
+
+      <!-- Chat -->
+      <div id="chatView">
+        <div id="chatBox" class="chat-container" aria-live="polite"></div>
+
+        <!-- COMPOSER -->
+        <div id="composer" class="composer">
+          <div class="composer-inner">
+            <button id="btnAttach" class="btn-attach" title="Adjuntar imagen" aria-haspopup="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <path d="M21 12.5l-8.2 8.2a6 6 0 11-8.5-8.5l9.2-9.2a4 4 0 115.6 5.6L9.7 18a2 2 0 11-2.8-2.8l8.1-8.1" stroke="#e8efff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+
+            <div class="input-wrap">
+              <textarea id="userInput" placeholder="Escribí tu pregunta… **negritas**, # títulos, listas, fórmulas ($a^2+b^2=c^2$), emojis 🙂"></textarea>
+
+              <div id="previewChip" class="chip-preview">
+                <img id="previewImg" alt="preview"/><span id="previewName">archivo</span>
+                <button id="btnRemoveImg" title="Quitar">✖</button>
+              </div>
+
+              <div id="uploader" class="uploader" role="dialog" aria-modal="true" aria-label="Adjuntar imagen">
+                <div class="title">Adjuntar imagen</div>
+                <div id="dropzone" class="dropzone">Arrastrá y soltá una imagen aquí</div>
+                <div class="d-flex gap-2 mt-2"><input id="imagenInput" class="form-control" type="file" accept="image/*"/></div>
+                <div class="hint">Se enviará al presionar <strong>Enviar</strong>.</div>
+              </div>
+            </div>
+
+            <div class="actions">
+              <button id="btnSend" class="btn-send">Enviar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3D VIEW -->
+      <div id="3dView" style="display:none;">
+        <div class="d-flex align-items-center justify-content-between mb-2 px-3 pt-3">
+          <h5 class="m-0">🔧 Visualización 3D</h5>
+          <div class="d-flex gap-2">
+            <a id="btnOpenViewer" href="#" target="_blank" rel="noopener" class="btn btn-primary btn-sm" style="display:none;">Abrir en visor dedicado</a>
+            <button class="btn btn-secondary btn-sm" onclick="volverAlChat()">← Volver al chat</button>
+          </div>
+        </div>
+        <div id="viewer3d-container" style="height:70vh; background:#0b0c10; padding:16px; position:relative;"></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    /* ---------- refs ---------- */
+    const chatBox   = document.getElementById("chatBox");
+    const userInput = document.getElementById("userInput");
+    const btnSend   = document.getElementById("btnSend");
+    const btnAttach = document.getElementById("btnAttach");
+    const composer  = document.getElementById("composer");
+    const uploader  = document.getElementById("uploader");
+    const imagenInput = document.getElementById("imagenInput");
+    const previewChip = document.getElementById("previewChip");
+    const previewImg  = document.getElementById("previewImg");
+    const previewName = document.getElementById("previewName");
+    const dropzone    = document.getElementById("dropzone");
+    const btnOpenViewer = document.getElementById("btnOpenViewer");
+    let queuedFile = null;
+    let lastModelURL = null;
+    let isSending = false;
+
+    /* ---------- utils ---------- */
+    const now = () => new Date().toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
+    const renderMD = (md) => DOMPurify.sanitize(marked.parse(md||"", {mangle:false, headerIds:false}));
+
+    // Auto-grow
+    function autosizeTextarea() {
+      userInput.style.height = "46px";
+      const max = 120;
+      const needed = Math.min(userInput.scrollHeight, max);
+      userInput.style.height = needed + "px";
+      userInput.classList.toggle("maxed", needed >= max);
+    }
+    userInput.addEventListener("input", autosizeTextarea);
+
+    // Mensajes
+    function addMessage({md, html, who="bot", previewUrl=null, save=true}){
+      const row = document.createElement("div");
+      row.className = `row-msg ${who}`;
+
+      const avatar = document.createElement("div");
+      avatar.className = "avatar"; avatar.textContent = who==="bot" ? "S" : "U";
+
+      const bubble = document.createElement("div");
+      bubble.className = "bubble";
+
+      if (html){
+        bubble.innerHTML = html;
+      } else {
+        bubble.innerHTML = renderMD(md||"");
+        const meta = document.createElement("div"); meta.className="meta"; meta.textContent = now();
+        bubble.appendChild(meta);
+      }
+
+      if (!html && previewUrl){
+        const wrap = document.createElement("div");
+        wrap.style.display="flex"; wrap.style.gap=".75rem"; wrap.style.alignItems="flex-start";
+        const img = document.createElement("img");
+        img.src = previewUrl; img.alt = "img";
+        img.style.width="88px"; img.style.height="88px"; img.style.objectFit="cover";
+        img.style.borderRadius="12px"; img.style.border="1px solid var(--border)";
+        const txt = document.createElement("div"); txt.innerHTML = bubble.innerHTML;
+        bubble.innerHTML=""; wrap.appendChild(img); wrap.appendChild(txt);
+        bubble.appendChild(wrap);
+        const meta = document.createElement("div"); meta.className="meta"; meta.textContent = now();
+        bubble.appendChild(meta);
+      }
+
+      if (who==="bot"){ row.appendChild(avatar); row.appendChild(bubble); }
+      else { row.appendChild(bubble); row.appendChild(avatar); }
+
+      chatBox.appendChild(row);
+      chatBox.scrollTop = chatBox.scrollHeight - 20;
+      if (window.MathJax?.typesetPromise && !html) MathJax.typesetPromise([bubble]);
+
+      if (save){
+        const hist = JSON.parse(localStorage.getItem("sintaxia_chat")||"[]");
+        hist.push({html:bubble.innerHTML, who});
+        localStorage.setItem("sintaxia_chat", JSON.stringify(hist));
+      }
+    }
+
+    const showTyping = () => {
+      const row = document.createElement("div");
+      row.className = "row-msg bot"; row.id="typing-row";
+      row.innerHTML = `<div class="avatar">S</div><div class="bubble"><div class="typing"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div></div>`;
+      chatBox.appendChild(row);
+      chatBox.scrollTop = chatBox.scrollHeight - 20;
+    };
+    const hideTyping = () => document.getElementById("typing-row")?.remove();
+
+    function restoreHistory(){
+      const hist = JSON.parse(localStorage.getItem("sintaxia_chat")||"[]");
+      hist.forEach(m=> addMessage({html:m.html, who:m.who, save:false}));
+      if (!hist.length){ addMessage({md:"Hola 👋 **Soy SINTAXIA.** Preguntame de *TICs* (redes, soporte, desarrollo, proyectos, IoT) o adjuntá una imagen.", who:"bot"}); }
+    }
+
+    /* ---------- uploader & adjuntos ---------- */
+    btnAttach.addEventListener("click", (e)=>{ e.stopPropagation(); uploader.classList.toggle("show"); });
+    document.addEventListener("click",(e)=>{ if (!uploader.contains(e.target) && !btnAttach.contains(e.target)) uploader.classList.remove("show"); });
+
+    function onFileQueued(file){
+      queuedFile = file;
+      const url = URL.createObjectURL(file);
+      previewImg.src = url; previewName.textContent = file.name;
+      previewChip.style.display = "flex";
+      uploader.classList.remove("show");
+      composer.classList.add("has-attachment");
+      autosizeTextarea();
+    }
+
+    imagenInput.addEventListener("change",(e)=>{ const f = e.target.files[0]; if (f) onFileQueued(f); });
+
+    ;["dragenter","dragover"].forEach(ev=> dropzone.addEventListener(ev,(e)=>{ e.preventDefault(); dropzone.classList.add("drag"); }));
+    ;["dragleave","drop"].forEach(ev=> dropzone.addEventListener(ev,(e)=>{ e.preventDefault(); dropzone.classList.remove("drag"); }));
+    dropzone.addEventListener("drop",(e)=>{ const f = e.dataTransfer.files[0]; if (f) onFileQueued(f); });
+
+    document.getElementById("btnRemoveImg").addEventListener("click", ()=>{
+      queuedFile = null; imagenInput.value=""; previewChip.style.display="none"; previewImg.src=""; previewName.textContent="";
+      composer.classList.remove("has-attachment");
+      userInput.style.height = "46px";
+    });
+
+    /* ---------- enviar (unificado) ---------- */
+    async function enviar(){
+      if (isSending) return;
+      const texto = userInput.value.trim();
+      if (!texto && !queuedFile) return;
+
+      const purl = queuedFile ? URL.createObjectURL(queuedFile) : null;
+      const userText = texto || (queuedFile ? "(imagen adjunta)" : "");
+      addMessage({md:userText, who:"user", previewUrl:purl});
+
+      userInput.value=""; autosizeTextarea(); userInput.focus();
+
+      try{
+        isSending = true;
+        btnSend.disabled = true;
+        showTyping();
+        let res, data;
+
+        if (queuedFile){
+          const form = new FormData();
+          form.append("imagen", queuedFile);
+          if (texto) form.append("nota", texto);
+
+          res = await fetch("/api/imagen", { method:"POST", body: form });
+          data = await res.json();
+          hideTyping();
+
+          if (!res.ok){ addMessage({md:"❌ **Error al procesar imagen.**", who:"bot"}); return; }
+
+          if (data.descripcion) addMessage({md:"🖼 **Imagen:** " + data.descripcion, who:"bot"});
+          if (data.respuesta)   addMessage({md:"💡 " + data.respuesta, who:"bot"});
+          if (data.respuesta_llm) addMessage({md:"🧠 " + data.respuesta_llm, who:"bot"});
+          if (data.modelo_url)  onModelReady(data.modelo_url);
+        } else {
+          res = await fetch("/api/mensaje", {
+            method:"POST", headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({ mensaje: texto })
+          });
+          data = await res.json();
+          hideTyping();
+
+          if (!res.ok){ addMessage({md:"❌ **Error:** " + (data.error || "no se pudo responder."), who:"bot"}); return; }
+          addMessage({md:data.respuesta || "Respuesta vacía.", who:"bot"});
+          if (data.modelo_url) onModelReady(data.modelo_url);
+        }
+      }catch(err){
+        hideTyping(); addMessage({md:"❌ **Error de red o servidor.** Intentá nuevamente.", who:"bot"}); console.error(err);
+      }finally{
+        btnSend.disabled = false;
+        isSending = false;
+        if (queuedFile){ document.getElementById("btnRemoveImg").click(); }
+        else { composer.classList.remove("has-attachment"); userInput.style.height = "46px"; }
+      }
+    }
+
+    btnSend.addEventListener("click", enviar);
+    userInput.addEventListener("keydown",(e)=>{
+      if (e.key === "Enter" && !e.shiftKey){ e.preventDefault(); enviar(); }
+    });
+
+    function onModelReady(modelUrl){
+      const urlVisor = `/viewer?src=${encodeURIComponent(modelUrl)}`;
+      const html = `
+        <div>
+          <p>🔗 <strong>Modelo listo</strong></p>
+          <p><a href="${urlVisor}" target="_blank" rel="noopener">Abrir en visor 3D (nueva pestaña)</a></p>
+        </div>
+      `;
+      addMessage({ html, who: "bot" });
+      mostrarModelo(modelUrl);
+    }
+
+    /* ---------- 3D viewer con MTL (colores/texturas) ---------- */
+    async function cargarModelo3D(url){
+      const container = document.getElementById("viewer3d-container");
+      container.innerHTML = "";
+      console.log("[3D] cargar:", url);
+
+      // ESM imports
+      const THREE = await import('https://esm.sh/three@0.152.2');
+      const { OrbitControls } = await import('https://esm.sh/three@0.152.2/examples/jsm/controls/OrbitControls.js');
+      const { OBJLoader }    = await import('https://esm.sh/three@0.152.2/examples/jsm/loaders/OBJLoader.js');
+      const { MTLLoader }    = await import('https://esm.sh/three@0.152.2/examples/jsm/loaders/MTLLoader.js');
+
+      // escena
+      const rect = container.getBoundingClientRect();
+      const W = Math.max(rect.width || 800, 300);
+      const H = Math.max(rect.height || 500, 300);
+
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x0b0c10);
+
+      const renderer = new THREE.WebGLRenderer({ antialias:true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(W, H);
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.2;
+      container.appendChild(renderer.domElement);
+
+      const camera = new THREE.PerspectiveCamera(60, W/H, 0.1, 5000);
+      camera.position.set(120,120,180);
+
+      const controls = new OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+
+      // iluminación
+      const hemi = new THREE.HemisphereLight(0xddeeff, 0x0b0c10, 0.75);
+      const amb  = new THREE.AmbientLight(0xffffff, 0.45);
+      const dir  = new THREE.DirectionalLight(0xffffff, 1.2);
+      dir.position.set(200,260,180);
+      scene.add(hemi, amb, dir);
+
+      const grid = new THREE.GridHelper(600, 30, 0x5a6cff, 0x2b3245);
+      grid.material.opacity = .35; grid.material.transparent = true;
+      scene.add(grid);
+      scene.add(new THREE.AxesHelper(80));
+
+      // placeholder
+      const phMat = new THREE.MeshStandardMaterial({ color: 0xb0b7c3, metalness: .15, roughness: .6 });
+      const placeholder = new THREE.Mesh(new THREE.BoxGeometry(60,20,40), phMat);
+      scene.add(placeholder);
+
+      // detectar mtllib en el OBJ
+      let mtllibName = null;
+      try{
+        const txt = await (await fetch(url)).text();
+        const m = txt.match(/^mtllib\s+(.+)$/mi);
+        if (m) mtllibName = m[1].trim();
+      }catch(e){ console.warn("No se pudo leer OBJ para detectar MTL:", e); }
+
+      const objLoader = new OBJLoader();
+
+      async function tryLoadMtl(){
+        if (!mtllibName) return false;
+        // armar URL candidata del .mtl (mismo folder del obj)
+        const u = new URL(url, window.location.origin);
+        const parts = u.pathname.split("/");
+        parts.pop();
+        parts.push(mtllibName);
+        const mtlUrl = parts.join("/");
+
+        // HEAD para verificar existencia
+        const head = await fetch(mtlUrl, { method: 'HEAD' });
+        if (!head.ok) return false;
+
+        const mtlLoader = new MTLLoader();
+        const materials = await new Promise((resolve, reject)=>{
+          mtlLoader.load(mtlUrl, mats => { mats.preload(); resolve(mats); }, undefined, reject);
+        });
+        objLoader.setMaterials(materials);
+        return true;
+      }
+
+      try{
+        const hasMtl = await tryLoadMtl();
+
+        await new Promise((resolve, reject)=>{
+          objLoader.load(url, obj=>{
+            scene.remove(placeholder);
+
+            if (!hasMtl){
+              obj.traverse(ch=>{
+                if (ch.isMesh && (!ch.material || !('color' in ch.material))){
+                  ch.material = new THREE.MeshStandardMaterial({
+                    color: 0xdddddd, metalness: .2, roughness: .65
+                  });
+                }
+              });
+            }
+
+            // centrar/escalar
+            const box = new THREE.Box3().setFromObject(obj);
+            const center = new THREE.Vector3(); box.getCenter(center); obj.position.sub(center);
+            const size = new THREE.Vector3(); box.getSize(size);
+            const maxDim = Math.max(size.x, size.y, size.z) || 1;
+            obj.scale.setScalar(160 / maxDim);
+            scene.add(obj);
+
+            camera.position.set(0, 60, Math.max(220, maxDim*2));
+            controls.target.set(0,0,0); controls.update();
+
+            resolve();
+          }, undefined, reject);
+        });
+      }catch(err){
+        console.error("❌ Error cargando modelo:", err);
+      }
+
+      function onResize(){
+        const r = container.getBoundingClientRect();
+        const w = Math.max(r.width || 800, 300);
+        const h = Math.max(r.height || 500, 300);
+        camera.aspect = w/h; camera.updateProjectionMatrix();
+        renderer.setSize(w, h);
+      }
+      window.addEventListener("resize", onResize);
+
+      (function animate(){
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+      })();
+    }
+
+    function mostrarModelo(url){
+      lastModelURL = url;
+      const toViewer = `/viewer?src=${encodeURIComponent(url)}`;
+      btnOpenViewer.href = toViewer;
+      btnOpenViewer.style.display = "inline-block";
+
+      document.getElementById("chatView").style.display = "none";
+      document.getElementById("3dView").style.display = "block";
+      cargarModelo3D(url);
+    }
+    function volverAlChat(){
+      document.getElementById("3dView").style.display = "none";
+      document.getElementById("chatView").style.display = "block";
+      document.getElementById("viewer3d-container").innerHTML = "";
+      btnOpenViewer.style.display = "none";
+    }
+
+    // Exponer funciones usadas por atributos HTML (por ser módulo)
+    window.volverAlChat = volverAlChat;
+    window.mostrarModelo = mostrarModelo;
+
+    /* ---------- init ---------- */
+    restoreHistory();
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
